@@ -1,0 +1,130 @@
+# 🧠 Juliet ULM: Persistent Cloud Memory Development Log (Weaviate Integration)
+
+---
+
+> **Date**: May 5, 2025  
+> **Operator**: Joshua Iturriaga  
+> **System**: Juliet ULM (Universal Long-term Memory)  
+> **Vector DB**: [Weaviate Cloud](https://console.weaviate.cloud)
+
+---
+
+## 🚀 Project Objective
+To establish a robust, cost-efficient, and queryable **cloud-based memory system** for Juliet that mirrors natural interaction — storing logs, contextual memories, and actionable prompts — using **Weaviate Embeddings** and a custom vector schema.
+
+---
+
+## ✅ Phase I: Environment & System Setup
+
+```bash
+# 1. Create Weaviate Sandbox instance on Weaviate Cloud Console
+# 2. Install latest Python client (v4.9.5 or higher)
+pip install -U weaviate-client
+```
+
+```python
+# 3. Connect to Weaviate Cloud
+from weaviate import connect_to_weaviate_cloud
+from weaviate.classes.init import Auth
+
+client = connect_to_weaviate_cloud(
+    cluster_url="https://<your-cluster>.weaviate.cloud",
+    auth_credentials=Auth.api_key("<your-admin-api-key>")
+)
+```
+
+---
+
+## 🧱 Phase II: Schema Creation
+
+```python
+# Schema definition for JulietMemory collection
+from weaviate.classes.config import Property, DataType, Configure
+
+client.collections.create(
+    name="JulietMemory",
+    properties=[
+        Property(name="text", data_type=DataType.TEXT),
+        Property(name="agent", data_type=DataType.TEXT),
+        Property(name="task_type", data_type=DataType.TEXT),
+        Property(name="timestamp", data_type=DataType.DATE),
+    ],
+    vectorizer_config=[
+        Configure.NamedVectors.text2vec_weaviate(
+            name="memory_vector",
+            source_properties=["text"],
+            model="Snowflake/snowflake-arctic-embed-l-v2.0"
+        )
+    ]
+)
+```
+
+---
+
+## 🧠 Phase III: Memory Functions
+
+```python
+from datetime import datetime, UTC
+
+def store_memory(text, agent="System", task_type="log"):
+    client.collections.get("JulietMemory").data.insert({
+        "text": text,
+        "agent": agent,
+        "task_type": task_type,
+        "timestamp": datetime.now(UTC).isoformat()
+    })
+
+def query_memory(prompt, limit=3):
+    results = client.collections.get("JulietMemory").query.near_text(
+        query=prompt,
+        limit=limit
+    )
+    for obj in results.objects:
+        print(f"[🧠] {obj.properties['text']} | Agent: {obj.properties['agent']}")
+```
+
+---
+
+## 🔧 Debug Log (Resolved Issues)
+- Switched deprecated `connect_to_wcs()` → `connect_to_weaviate_cloud()`
+- Fixed RFC3339 timestamp formatting (added `Z` suffix)
+- Corrected property data types (`data_type=DataType.TEXT`)
+- Resolved schema/embedding mismatch with Snowflake model
+
+---
+
+## 🎯 Current Capabilities
+- Live semantic memory storage via cloud
+- Query via `near_text` using natural language
+- Plug-and-play foundation for Juliet’s future `ULMS` core
+
+---
+
+## ⏸️ Current Stopping Point
+- Memory functions verified
+- Engine abstraction (JulietMemoryEngine) to be wrapped next
+- Optional GUI/CLI input coming soon
+
+To resume, run:
+```bash
+python test_juliet_memory.py
+```
+
+---
+
+## 📁 Suggested Directory Structure
+```
+juliet-ulm/
+├── weaviate_memory.py         # Core memory logic
+├── test_juliet_memory.py     # Demo insert/query script
+├── README.md                 # GitHub landing doc (use this summary)
+```
+
+---
+
+## 🧭 Next Steps
+- 🔄 Wrap into `JulietMemoryEngine` class
+- 🧪 Create CLI for fast logging (`juliet.store()`)
+- 💬 Integrate live with conversation loop (memory reference)
+
+
